@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "asmpp": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Max\\ASM++\\testScripts\\HelloWorld.asmpp -st -entry start"
+    }
+  }
+}
