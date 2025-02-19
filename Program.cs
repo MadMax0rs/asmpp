@@ -4,6 +4,8 @@ using System.Collections;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.CompilerServices;
+
 
 if (args.Length <= 0)
 {
@@ -94,7 +96,7 @@ List<Token> SplitString(string code)
 	return tokens;
 }
 
-int FindNextNonWhitespace(List<Token> tokensIn, int currentIndex)
+static int FindNextNonWhitespace(List<Token> tokensIn, int currentIndex)
 {
 	// <2 chars | Is whitespace | Output
 	// ---------|---------------|-------
@@ -108,7 +110,7 @@ int FindNextNonWhitespace(List<Token> tokensIn, int currentIndex)
 	}
 	return currentIndex;
 }
-int FindLastNonWhitespace(List<Token> tokensIn, int currentIndex)
+static int FindLastNonWhitespace(List<Token> tokensIn, int currentIndex)
 {
 	// <2 chars | Is whitespace | Output
 	// ---------|---------------|-------
@@ -561,14 +563,16 @@ string tokens_to_asm(IList<Token> tokens, string code)
 				}
 				break;
 			case TokenType._operator:
-				if (Registers.IsRegister(tokens[i + 1]) || Registers.IsRegister(tokens[i + 2]))
+				bool op0IsVar = !Registers.IsRegister(tokens[i + 1]);
+				bool op1IsVar = !Registers.IsRegister(tokens[i + 2]);
+				if (op0IsVar || op1IsVar)
 				{
 					switch (token.value)
 					{
 						case "=":
-							if (Registers.IsRegister(tokens[i + 1]))
+							if (op0IsVar && op1IsVar)
 							{
-
+								throw new Exception($"Error at {token.line}:{token.start}: Operator '=' cannot have 2 ");
 							}
 							break;
 						default:
@@ -695,13 +699,6 @@ string tokens_to_asm(IList<Token> tokens, string code)
 						output += $"{pushString}mul {mulBy}\n{movString}{popString}";
 						break;
 					case "=":
-						bool op0IsVar = !Registers.IsRegister(tokens[i + 1].value);
-						bool op1IsVar = !Registers.IsRegister(tokens[i + 2].value);
-						// if both operands are in memory
-						if (!(op0IsVar ^ op1IsVar))
-						{
-
-						}
 						output += $"mov {tokens[i + 1].value}, {tokens[i + 2].value}\n";
 						break;
 					case "&=":
@@ -938,6 +935,20 @@ public struct Token
 		this.start = start;
 		this.end = end;
 		this.line = line;
+	}
+}
+
+// TODO: turn all of the operators into C# operators
+public static class Operators
+{
+	// https://en.wikipedia.org/wiki/X86_instruction_listings
+	public static string Mov(Token a, Token b)
+	{
+		if (a.)
+		{
+			IsVar("");
+		}
+		return $"";
 	}
 }
 
