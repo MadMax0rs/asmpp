@@ -122,14 +122,7 @@ int FindLastNonWhitespace(List<Token> tokensIn, int currentIndex)
 	}
 	return currentIndex;
 }
-bool IsRegister(string str)
-{
-	return
-		Registers._64Bit.Contains(str) ||
-		Registers._32Bit.Contains(str) ||
-		Registers._16Bit.Contains(str) ||
-		Registers._8Bit.Contains(str);
-}
+
 bool IsVar(string var)
 {
 	for (int i = 0; i < Vars.Count; i++)
@@ -354,7 +347,6 @@ List<Token> Tokenize(List<Token> tokensIn)
 					if (tokensIn[i - 1].value == "*" || tokensIn[i - 1].value == "/" || tokensIn[i - 1].value == "-" || tokensIn[i - 1].value == "+")
 					{
 						currentToken.value = tokensIn[i - 1].value + currentToken.value;
-
 					}
 					else
 					{
@@ -569,6 +561,20 @@ string tokens_to_asm(IList<Token> tokens, string code)
 				}
 				break;
 			case TokenType._operator:
+				if (Registers.IsRegister(tokens[i + 1]) || Registers.IsRegister(tokens[i + 2]))
+				{
+					switch (token.value)
+					{
+						case "=":
+							if (Registers.IsRegister(tokens[i + 1]))
+							{
+
+							}
+							break;
+						default:
+							throw new Exception($"Error at {token.line}:{token.start}: Operator '{token.value}' cannot take a ");
+					}
+				}
 				switch (token.value)
 				{
 					case "+=":
@@ -578,11 +584,11 @@ string tokens_to_asm(IList<Token> tokens, string code)
 						output += $"sub {tokens[i + 1].value}, {tokens[i + 2].value}\n";
 						break;
 					case "/=":
-						if (!IsRegister(tokens[i + 1].value))
+						if (!Registers.IsRegister(tokens[i + 1].value))
 						{
 							throw new Exception($"Error at {token.line}:{token.start}: Cannot divide a value in memory");
 						}
-						else if (!IsRegister(tokens[i + 2].value))
+						else if (!Registers.IsRegister(tokens[i + 2].value))
 						{
 							throw new Exception($"Error at {token.line}:{token.start}: Cannot divide by a value in memory");
 						}
@@ -629,11 +635,11 @@ string tokens_to_asm(IList<Token> tokens, string code)
 						output += $"{pushString}div {divBy}\n{movString}{popString}";
 						break;
 					case "*=":
-						if (!IsRegister(tokens[i + 1].value))
+						if (!Registers.IsRegister(tokens[i + 1].value))
 						{
 							throw new Exception($"Error at {token.line}:{token.start}: Cannot multiply a value in memory");
 						}
-						else if (!IsRegister(tokens[i + 2].value))
+						else if (!Registers.IsRegister(tokens[i + 2].value))
 						{
 							throw new Exception($"Error at {token.line}:{token.start}: Cannot multiply by a value in memory");
 						}
@@ -689,8 +695,8 @@ string tokens_to_asm(IList<Token> tokens, string code)
 						output += $"{pushString}mul {mulBy}\n{movString}{popString}";
 						break;
 					case "=":
-						bool op0IsVar = !IsRegister(tokens[i + 1].value);
-						bool op1IsVar = !IsRegister(tokens[i + 2].value);
+						bool op0IsVar = !Registers.IsRegister(tokens[i + 1].value);
+						bool op1IsVar = !Registers.IsRegister(tokens[i + 2].value);
 						// if both operands are in memory
 						if (!(op0IsVar ^ op1IsVar))
 						{
@@ -709,7 +715,7 @@ string tokens_to_asm(IList<Token> tokens, string code)
 				i += 2;
 				break;
 			default:
-				if (IsRegister(token.value))
+				if (Registers.IsRegister(token.value))
 				{
 					break;
 				}
@@ -1026,6 +1032,23 @@ public static class Registers
 		"rsi", "rdi", "rbp", "rsp",
 		"r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
 	};
+
+	public static bool IsRegister(string str)
+	{
+		return
+			_64Bit.Contains(str) ||
+			_32Bit.Contains(str) ||
+			_16Bit.Contains(str) ||
+			_8Bit.Contains(str);
+	}
+	public static bool IsRegister(Token register)
+	{
+		return
+			register.type == TokenType._8BitRegister ||
+			register.type == TokenType._16BitRegister ||
+			register.type == TokenType._32BitRegister ||
+			register.type == TokenType._64BitRegister;
+	}
 
 	public static string RegisterConvert(Token reg, RegisterSizes convertFrom, RegisterSizes convertTo, List<string> vars = null)
 	{
