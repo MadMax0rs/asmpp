@@ -130,6 +130,17 @@ bool IsRegister(string str)
 		Registers._16Bit.Contains(str) ||
 		Registers._8Bit.Contains(str);
 }
+bool IsVar(string var)
+{
+	for (int i = 0; i < Vars.Count; i++)
+	{
+		if (var == Vars[i].name)
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 List<Token> Tokenize(List<Token> tokensIn)
 {
@@ -238,11 +249,33 @@ List<Token> Tokenize(List<Token> tokensIn)
 				break;
 
 			case "[":
-				if (tokensIn[FindLastNonWhitespace(tokensIn, i - 1)].value))
+				Token lastKeyword = tokensIn[FindLastNonWhitespace(tokensIn, i - 1)];
+				// If the last non-whitespace is a valid sized type(byte, word, etc.)
+				if (Consts.SizedTypes.Contains(lastKeyword.value))
 				{
+					lastKeyword.type = TokenType.sizedType;
+					tokensOut.Add(lastKeyword);
 
+					int varIndex = FindNextNonWhitespace(tokensIn, i + 1);
+					Token var = tokensIn[varIndex];
+
+					var.type = TokenType.memoryReference;
+					tokensOut.Add(var);
+
+					i = FindNextNonWhitespace(tokensIn, varIndex + 1);
+					if (tokensIn[i].value != "]")
+					{
+						throw new Exception($"Error at {tokensIn[i].line}:{tokensIn[i].start}: Expected ']' but got {tokensIn[i].value}");
+					}
+					i++;
+				}
+				else
+				{
+					throw new Exception($"Error at {lastKeyword.line}:{lastKeyword.start}: Expected a sized type(byte, word, dword, etc.) but got {lastKeyword.value}");
 				}
 				break;
+			case "]":
+				throw new Exception($"Error at {tokensIn[i].line}:{tokensIn[i].start}: Unexpected ']'");
 
 			case ",":
 				if (!arg)
@@ -357,6 +390,12 @@ List<Token> Tokenize(List<Token> tokensIn)
 				if (!arg)
 				{
 					// token type is TokenType.none by default
+					tokensOut.Add(currentToken);
+					continue;
+				}
+				if (IsVar(currentToken.value))
+				{
+					currentToken.type = TokenType.memoryLocation;
 					tokensOut.Add(currentToken);
 					continue;
 				}
@@ -652,12 +691,17 @@ string tokens_to_asm(IList<Token> tokens, string code)
 					case "=":
 						bool op0IsVar = !IsRegister(tokens[i + 1].value);
 						bool op1IsVar = !IsRegister(tokens[i + 2].value);
+						// if both operands are in memory
+						if (!(op0IsVar ^ op1IsVar))
+						{
+
+						}
 						output += $"mov {tokens[i + 1].value}, {tokens[i + 2].value}\n";
 						break;
 					case "&=":
+						// TODO: Implement operations
 					case "|=":
 					case "^=":
-						// TODO: Implement operations
 						break;
 					default:
 						break;
@@ -755,7 +799,7 @@ public enum TokenType : int
 	/// </summary>
 	label,
 	/// <summary>
-	/// TODO: Add global label
+	/// allows defining of global labels
 	/// </summary>
 	global,
 	/// <summary>
@@ -814,7 +858,14 @@ public enum TokenType : int
 	/// byte, word, dword, qword, etc.
 	/// </summary>
 	sizedType,
-
+	/// <summary>
+	/// a location in memory, but not the memory at the location
+	/// </summary>
+	memoryLocation,
+	/// <summary>
+	/// the memory at a specified location
+	/// </summary>
+	memoryReference
 	// TODO: Implement Comments
 }
 
@@ -845,19 +896,19 @@ public struct Var
 	/// <summary>
 	/// name of the variable
 	/// </summary>
-	string name;
+	public string name;
 	/// <summary>
 	/// defined size in bytes
 	/// </summary>
-	int sizeBytes;
+	public int sizeBytes;
 	/// <summary>
 	/// defined size in unit is was defined with
 	/// </summary>
-	int size;
+	public int size;
 	/// <summary>
 	/// unit used to define var size
 	/// </summary>
-	string unit;
+	public string unit;
 	public Var(string name, int sizeBytes, int size, string unit)
 	{
 		this.name = name;
