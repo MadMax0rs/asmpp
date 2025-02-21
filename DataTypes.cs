@@ -112,9 +112,9 @@ namespace asmpp
 		/// </summary>
 		sizedType,
 		/// <summary>
-		/// a location in memory, but not the memory at the location
+		/// an address for a location in memory, but not the memory at the address
 		/// </summary>
-		memoryLocation,
+		memoryAddress,
 		/// <summary>
 		/// the memory at a specified location
 		/// </summary>
@@ -153,21 +153,26 @@ namespace asmpp
 		/// <summary>
 		/// defined size in bytes
 		/// </summary>
-		public int sizeBytes;
+		public uint sizeBytes;
 		/// <summary>
 		/// defined size in unit is was defined with
 		/// </summary>
-		public int size;
+		public uint size;
+		/// <summary>
+		/// Used when value is a memory reference, otherwise its null
+		/// </summary>
+		public string sizeType;
 		/// <summary>
 		/// unit used to define var size
 		/// </summary>
 		public string unit;
-		public Var(string name, int sizeBytes, int size, string unit)
+		public Var(string name, uint sizeBytes, uint size, string unit, string sizeType = "")
 		{
 			this.name = name;
 			this.sizeBytes = sizeBytes;
 			this.size = size;
 			this.unit = unit;
+			this.sizeType = sizeType;
 		}
 	}
 	public struct Token
@@ -177,6 +182,10 @@ namespace asmpp
 		/// string of what is typed in asmpp
 		/// </summary>
 		public string value;
+		/// <summary>
+		/// Used when value is a memory reference, otherwise its null
+		/// </summary>
+		public string sizeType;
 		/// <summary>
 		/// if applicable, the size in bytes(memory location, register, etc.)
 		/// </summary>
@@ -194,7 +203,7 @@ namespace asmpp
 		/// </summary>
 		public int line;
 
-		public Token(TokenType type = TokenType.none, string value = "", uint? size = null, int start = 0, int end = 0, int line = 0)
+		public Token(TokenType type = TokenType.none, string value = "", string sizeType = "", uint? size = null, int start = 0, int end = 0, int line = 0)
 		{
 			this.type = type;
 			this.value = value;
@@ -202,6 +211,7 @@ namespace asmpp
 			this.start = start;
 			this.end = end;
 			this.line = line;
+			this.sizeType = sizeType;
 		}
 	}
 }

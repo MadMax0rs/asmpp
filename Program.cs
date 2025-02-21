@@ -243,19 +243,24 @@ namespace asmpp
 					case "[":
 						// TODO: Double check case is correct
 						Token lastKeyword = tokensIn[Functions.FindLastNonWhitespace(tokensIn, i - 1)];
+						int varIndex = Functions.FindNextNonWhitespace(tokensIn, i + 1);
+						Token var = tokensIn[varIndex];
 						// If the last non-whitespace is a valid sized type(byte, word, etc.)
 						if (Consts.SizedTypes.Contains(lastKeyword.value))
 						{
 							lastKeyword.type = TokenType.sizedType;
 							tokensOut.Add(lastKeyword);
+							var.size = (uint?)Consts.NumBytes(lastKeyword.value, 1);
+							var.sizeType = lastKeyword.value;
+						}
+						else
+						{
+							var.size = null;
 						}
 
 
-						int varIndex = Functions.FindNextNonWhitespace(tokensIn, i + 1);
-						Token var = tokensIn[varIndex];
 
 						var.type = TokenType.memoryReference;
-						var.size = (uint?)Consts.NumBytes(lastKeyword.value, 1);
 						tokensOut.Add(var);
 
 						i = Functions.FindNextNonWhitespace(tokensIn, varIndex + 1);
@@ -386,7 +391,7 @@ namespace asmpp
 						}
 						if (Functions.IsVar(currentToken.value))
 						{
-							currentToken.type = TokenType.memoryLocation;
+							currentToken.type = TokenType.memoryAddress;
 							tokensOut.Add(currentToken);
 							continue;
 						}
