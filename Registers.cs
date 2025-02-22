@@ -81,6 +81,16 @@ namespace asmpp
 				throw new Exception("Error: Token is not a register type");
 		}
 
+		public static TokenType RegisterToType(string register)
+		{
+			return
+				_64Bit.Contains(register) ? TokenType._64BitRegister :
+				_32Bit.Contains(register) ? TokenType._32BitRegister :
+				_16Bit.Contains(register) ? TokenType._16BitRegister :
+				_8Bit .Contains(register) ? TokenType._8BitRegister :
+				throw new Exception("Error: Unknown register");
+		}
+
 		public static string RegisterConvert(Token reg, RegisterSizes convertFrom, RegisterSizes convertTo, List<string> vars = null)
 		{
 			switch (convertFrom)

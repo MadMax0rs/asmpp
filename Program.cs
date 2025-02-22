@@ -80,7 +80,7 @@ namespace asmpp
 			{
 				List<Token> tokens = SplitString(FileString);
 				Tokens = Tokenize(tokens);
-				Output = tokens_to_asm(Tokens, FileString);
+				Output = TokensToAsm(Tokens, FileString);
 				string compiledPath = args[0][..^2];
 				if (File.Exists(compiledPath))
 				{
@@ -125,7 +125,7 @@ namespace asmpp
 					column = 0;
 					continue;
 				}
-				Token currentToken = new Token(value: str, start: column, line: line);
+				Token currentToken = new(value: str, start: column, line: line);
 				column += str.Length;
 				currentToken.end = column;
 				tokens.Add(currentToken);
@@ -171,7 +171,7 @@ namespace asmpp
 				}
 				// Set current token after string literal so that, when dealing with a string literal, it keeps its value, start, and line
 				currentToken = tokensIn[i];
-				int next = 0;
+				int next;
 				switch (tokensIn[i].value)
 				{
 					// Keywords
@@ -231,7 +231,7 @@ namespace asmpp
 						break;
 
 					case ")":
-						if (tokensOut[tokensOut.Count - 1].type != TokenType.argsStart && tokensOut[tokensOut.Count - 1].type != TokenType.arg)
+						if (tokensOut[^1].type != TokenType.argsStart && tokensOut[^1].type != TokenType.arg)
 						{
 							throw new Exception($"Error at {currentToken.line}:{currentToken.start}: Unexpected symbol ')'");
 						}
@@ -251,6 +251,7 @@ namespace asmpp
 							lastKeyword.type = TokenType.sizedType;
 							tokensOut.Add(lastKeyword);
 							var.size = (uint?)Consts.NumBytes(lastKeyword.value, 1);
+							var.sizeBits = var.size * 8;
 							var.sizeType = lastKeyword.value;
 						}
 						else
@@ -383,19 +384,25 @@ namespace asmpp
 							break;
 						}
 					default:
-						if (!arg)
+						if (arg)
 						{
-							// token type is TokenType.none by default
-							tokensOut.Add(currentToken);
-							continue;
+							currentToken.type = TokenType.arg;
 						}
 						if (Functions.IsVar(currentToken.value))
 						{
 							currentToken.type = TokenType.memoryAddress;
-							tokensOut.Add(currentToken);
-							continue;
 						}
-						currentToken.type = TokenType.arg;
+						if (Registers.IsRegister(currentToken.value))
+						{
+							currentToken.type = Registers.RegisterToType(currentToken.value);
+						}
+						if (int.TryParse(currentToken.value, out _))
+						{
+							currentToken.type = TokenType.int_lit;
+							currentToken.sizeBits = Functions.NumBitsForInt(uint.Parse(currentToken.value));
+						}
+
+						// token type is TokenType.none by default
 						tokensOut.Add(currentToken);
 						break;
 				}
@@ -406,7 +413,8 @@ namespace asmpp
 			return tokensOut;
 		}
 
-		public static string tokens_to_asm(IList<Token> tokens, string code)
+
+		public static string TokensToAsm(IList<Token> tokens, string code)
 		{
 			string output = "";
 			List<TokenType> expectType = [];
@@ -414,7 +422,7 @@ namespace asmpp
 			Stack currentSectionStack = new();
 			currentSectionStack.Push(SectionType.none);
 			string args = "";
-			for (int i = 0; i < tokens.Count(); i++)
+			for (int i = 0; i < tokens.Count; i++)
 			{
 				Token token = tokens[i];
 				if (expectType.Count > 0)
@@ -468,7 +476,7 @@ namespace asmpp
 						{
 							throw new Exception($"Error at {token.line}:{token.start}: Invalid keyword in current section \"{currentSectionStack.Peek()}\"");
 						}
-						if (i + 2 < tokens.Count() && tokens[i + 2].type == TokenType.semi)
+						if (i + 2 < tokens.Count && tokens[i + 2].type == TokenType.semi)
 						{
 							output += $"push {tokens[i + 1].value}\nret\n";
 						}

@@ -183,6 +183,7 @@ namespace asmpp
 		/// </summary>
 		public string value;
 		/// <summary>
+		/// byte, word, dword, etc.
 		/// Used when value is a memory reference, otherwise its null
 		/// </summary>
 		public string sizeType;
@@ -190,6 +191,10 @@ namespace asmpp
 		/// if applicable, the size in bytes(memory location, register, etc.)
 		/// </summary>
 		public uint? size;
+		/// <summary>
+		/// if applicable, the size in bits(memory location, register, etc.)
+		/// </summary>
+		public uint? sizeBits;
 		/// <summary>
 		/// how many characters after the start of the line is this token's first character
 		/// </summary>

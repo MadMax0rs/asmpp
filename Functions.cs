@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -47,6 +48,16 @@ namespace asmpp
 				}
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="num"></param>
+		/// <returns>The minimum number if bits needed to store a given number</returns>
+		public static uint NumBitsForInt(uint num)
+		{
+			return num == 0 ? 1 : (uint)(BitOperations.Log2(num) + 1);
 		}
 	}
 }
