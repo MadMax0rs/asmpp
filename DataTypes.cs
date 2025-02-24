@@ -90,7 +90,7 @@ namespace asmpp
 		/// <summary>
 		/// =, +=, -=, *=, /=, &=, |=, ^=, ++, --, <<, >>
 		/// </summary>
-		_operator,  // TODO: Implement &=, |=, ^=, ++, --, <<, >>
+		_operator,  // TODO: Implement &=, |=, ^=, ++, --, <<, >>, !
 		/// <summary>
 		/// al, ah, bl, ah, etc.
 		/// </summary>

@@ -311,18 +311,27 @@ namespace asmpp
 					case "<":
 						if (tokensIn[i + 1].value == "<")
 						{
-							i++;
-							next = Functions.FindNextNonWhitespace(tokensIn, i);
+							currentToken.value = "<<";
+							currentToken.type = TokenType._operator;
+							tokensOut.Add(currentToken);
+							i = Functions.FindNextNonWhitespace(tokensIn, i + 2);
+							currentToken = tokensIn[i];
+							
+							tokensOut.Add(currentToken);
+							// +2 because +1 should be '>'
 
 						}
 						break;
 					case ">":
 						if (tokensIn[i + 1].value == ">")
 						{
-							i++;
-							next = Functions.FindNextNonWhitespace(tokensIn, i);
+							// +2 because +1 should be '>'
+							i = Functions.FindNextNonWhitespace(tokensIn, i + 2);
 
 						}
+						break;
+					case "!":
+						i++;
 						break;
 					case "+":
 						if (tokensIn[i + 1].value == "+")
@@ -388,10 +397,10 @@ namespace asmpp
 						{
 							currentToken.type = TokenType.arg;
 						}
-						if (Functions.IsVar(currentToken.value))
+						/*if (Functions.IsVar(currentToken.value))
 						{
 							currentToken.type = TokenType.memoryAddress;
-						}
+						}*/
 						if (Registers.IsRegister(currentToken.value))
 						{
 							currentToken.type = Registers.RegisterToType(currentToken.value);

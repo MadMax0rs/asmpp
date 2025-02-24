@@ -29,7 +29,7 @@ namespace asmpp
 
 		// https://en.wikipedia.org/wiki/X86_instruction_listings
 
-		public static string MovAddSub(Token left, Token right, string operation)
+		public static string MovAddSubAndOrXorTest(Token left, Token right, string operation)
 		{
 			// 0 = unknown symbol, 1 = register, 2 = memory location, 3 = memory reference
 			operandType aType =
@@ -100,37 +100,126 @@ namespace asmpp
 				// Default
 				_ => throw new Exception("Error: Unknown operand type"),
 			};
-			return output;
+			return output + '\n';
 		}
-		
+
 		// mov, add, and sub can have same operands, only difference is the operator
 		public static string Mov(Token left, Token right)
 		{
-			return MovAddSub(left, right, "mov");
+			return MovAddSubAndOrXorTest(left, right, "mov");
 		}
 		public static string Add(Token left, Token right)
 		{
-			return MovAddSub(left, right, "add");
+			return MovAddSubAndOrXorTest(left, right, "add");
 		}
 		public static string Sub(Token left, Token right)
 		{
-			return MovAddSub(left, right, "sub");
+			return MovAddSubAndOrXorTest(left, right, "sub");
 		}
-	
-		
-		public static string DivMul(Token operand, string operation)
+		public static string And(Token left, Token right)
+		{
+			return MovAddSubAndOrXorTest(left, right, "and");
+		}
+		public static string Or(Token left, Token right)
+		{
+			return MovAddSubAndOrXorTest(left, right, "or");
+		}
+		public static string Xor(Token left, Token right)
+		{
+			return MovAddSubAndOrXorTest(left, right, "xor");
+		}
+		public static string Test(Token left, Token right)
+		{
+			return MovAddSubAndOrXorTest(left, right, "test");
+		}
+
+
+		public static string DivMulIncDecNot(Token operand, string operation)
 		{
 			if (operand.type == TokenType.memoryAddress)
 			{
-				throw new Exception($"Error at {operand.line}:{operand.start}: operand cannot be a memory address");
+				throw new Exception($"Error at {operand.line}:{operand.start}: operand '{operand.value}' cannot be a memory address");
 			}
-
-			string output = $"{operation} ";
-
-			output += operand.type switch
+			else if (operand.type == TokenType.int_lit)
 			{
-
+				throw new Exception($"Error at {operand.line}:{operand.start}: operand '{operand.value}' cannot be an inager litteral");
 			}
+
+			string output = $"{operation} {operand.type switch
+			{ 
+				// Memory reference
+				TokenType.memoryReference
+					=> $"{operand.sizeType}[{operand.value}]",
+
+				// Register
+				_ => operand.value
+			}}";
+
+			return output;
+		}
+
+		// div and mul can have same operands, only difference is the operator
+		public static string Div(Token operand)
+		{
+			return DivMulIncDecNot(operand, "div");
+		}
+		public static string Mul(Token operand)
+		{
+			return DivMulIncDecNot(operand, "mul");
+		}
+		public static string Inc(Token operand)
+		{
+			return DivMulIncDecNot(operand, "inc");
+		}
+		public static string Dec(Token operand)
+		{
+			return DivMulIncDecNot(operand, "dec");
+		}
+		public static string Not(Token operand)
+		{
+			return DivMulIncDecNot(operand, "not");
+		}
+
+		public static string ShlShr(Token left, Token right, string operation)
+		{
+			if (right.type != TokenType.int_lit)
+			{
+				throw new Exception($"Error at {right.line}:{right.start}: Right hand operand must be an intager litteral");
+			}
+			if (!Registers.IsRegister(left) && left.type != TokenType.memoryReference)
+			{
+				throw new Exception($"Error at {left.line}:{left.start}: Left hand operand must be a register or memory reference");
+			}
+			if (left.type == TokenType.memoryReference && left.size == null)
+			{
+				throw new Exception($"Error at {left.line}:{left.start}: Operation size not specified");
+			}
+
+			// Passed all checks
+			string output = $"{operation} {left.type switch
+			{
+				// Memory reference
+				TokenType.memoryReference
+					=> $"{left.sizeType}[{left.value}]",
+
+				// Register
+				_ => left.value
+			}}, {right.value}";
+
+			return output;
+		}
+		public static string Shl(Token left, Token right)
+		{
+			return ShlShr(left, right, "shl");
+		}
+		public static string Shr(Token left, Token right)
+		{
+			return ShlShr(left, right, "shr");
+		}
+
+		public static string NotDecInc(Token operand, string operation)
+		{
+
 		}
 	}
 }
